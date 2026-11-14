@@ -29,6 +29,12 @@ enum Commands {
         command: Module,
     },
 
+    /// Manage built-in payload modules (Zygisk Next / LSPosed)
+    Payload {
+        #[command(subcommand)]
+        command: PayloadCmd,
+    },
+
     /// Trigger `post-fs-data` event
     PostFsData,
 
@@ -281,6 +287,14 @@ enum Sepolicy {
 }
 
 #[derive(clap::Subcommand, Debug)]
+enum PayloadCmd {
+    /// Install missing built-in payload modules now
+    Install,
+
+    /// Show built-in payload module status
+    Status,
+}
+
 enum Module {
     /// Install module <ZIP>
     Install {
@@ -537,6 +551,14 @@ pub fn run() -> Result<()> {
         Commands::SoftReboot => crate::soft_reboot::soft_reboot(),
 
         Commands::Insmod { module, params } => debug::insmod(&module, &params),
+
+        Commands::Payload { command } => {
+            utils::switch_mnt_ns(1)?;
+            match command {
+                PayloadCmd::Install => crate::payload::install_all(),
+                PayloadCmd::Status => crate::payload::status(),
+            }
+        }
 
         Commands::Module { command } => {
             utils::switch_mnt_ns(1)?;

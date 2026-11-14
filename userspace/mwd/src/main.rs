@@ -31,6 +31,8 @@ mod init_event;
 #[cfg(target_os = "android")]
 mod mwcalls;
 #[cfg(target_os = "android")]
+mod payload;
+#[cfg(target_os = "android")]
 mod late_load;
 mod lkm_image;
 mod lkm_image_btf;

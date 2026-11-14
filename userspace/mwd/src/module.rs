@@ -102,12 +102,19 @@ fn exec_install_script(module_file: &str, is_metamodule: bool, module_id: &str) 
     let install_script =
         metamodule::get_install_script(is_metamodule, INSTALLER_CONTENT, INSTALL_MODULE_SCRIPT)?;
 
-    let result = Command::new(assets::BUSYBOX_PATH)
+    let mut command = Command::new(assets::BUSYBOX_PATH);
+    command
         .args(["sh", "-c", &install_script])
         .envs(get_common_script_envs(Some(module_id)))
         .env("OUTFD", "1")
-        .env("ZIPFILE", realpath)
-        .status()?;
+        .env("ZIPFILE", realpath);
+    if crate::payload::bypass_boot_check() {
+        // Built-in payloads are provisioned during post-fs-data, before zygote
+        // exists; pretend to be a Magisk app install so module installers that
+        // require BOOTMODE keep working.
+        command.env("BOOTMODE", "true");
+    }
+    let result = command.status()?;
     ensure!(result.success(), "Failed to install module script");
     Ok(())
 }
@@ -115,6 +122,9 @@ fn exec_install_script(module_file: &str, is_metamodule: bool, module_id: &str) 
 // Check if Android boot is completed before installing modules
 fn ensure_boot_completed() -> Result<()> {
     // ensure getprop sys.boot_completed == 1
+    if crate::payload::bypass_boot_check() {
+        return Ok(());
+    }
     if getprop("sys.boot_completed").as_deref() != Some("1") {
         bail!("Android is Booting!");
     }
@@ -885,6 +895,7 @@ pub fn uninstall_module(id: &str) -> Result<()> {
     // Mark for removal
     let remove_file = module_path.join(defs::REMOVE_FILE_NAME);
     File::create(remove_file).with_context(|| "Failed to create remove file")?;
+    crate::payload::mark_user_removed(id);
 
     info!("Module {id} marked for removal");
 
