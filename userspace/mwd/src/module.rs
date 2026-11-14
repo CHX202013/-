@@ -69,6 +69,11 @@ pub fn get_common_script_envs(module_id: Option<&str>) -> Vec<(&'static str, Str
         ("MW_VER", defs::VERSION_NAME.to_string()),
         ("MW_UAPI_VER", mwcalls::uapi_version().to_string()),
         ("MW_RUNTIME_MODE", mwcalls::runtime_mode().to_string()),
+        // KernelSU compatibility names, many modules probe these
+        ("KSU", "true".to_string()),
+        ("KSU_VER", defs::VERSION_NAME.to_string()),
+        ("KSU_VER_CODE", defs::VERSION_CODE.to_string()),
+        ("KSU_KERNEL_VER_CODE", mwcalls::get_version().to_string()),
         (
             "PATH",
             format!(

@@ -151,8 +151,9 @@ fn fetch(m: &BuiltinModule) -> Result<PathBuf> {
 }
 
 fn install_from_zip(m: &BuiltinModule, zip: &Path) -> Result<()> {
+    let zip_str = zip.to_string_lossy().to_string();
     set_bypass(true);
-    let result = module::install_module(zip.to_string_lossy().as_ref());
+    let result = module::install_module(&zip_str);
     set_bypass(false);
     result.with_context(|| format!("install {}", m.name))?;
     activate(m).with_context(|| format!("activate {}", m.name))?;
@@ -177,7 +178,37 @@ fn activate(m: &BuiltinModule) -> Result<()> {
     if !live.join("module.prop").exists() {
         bail!("module {} has no module.prop", m.id);
     }
+    install_manager_app(m.id, &live);
     Ok(())
+}
+
+/// LSPosed ships its manager UI as manager.apk inside the module. post-fs-data runs before
+/// system_server is up, so wait for pm in a detached shell and install it exactly once.
+fn install_manager_app(id: &str, live: &Path) {
+    if id != "zygisk_lsposed" {
+        return;
+    }
+    let apk = live.join("manager.apk");
+    if !apk.exists() {
+        return;
+    }
+    let marker = Path::new(PAYLOAD_DIR).join("zygisk_lsposed.manager_installed");
+    if marker.exists() {
+        return;
+    }
+    let script = format!(
+        "until /system/bin/pm list packages >/dev/null 2>&1; do sleep 3; done; /system/bin/pm install -r '{}' >/dev/null 2>&1 && : > '{}'",
+        apk.display(),
+        marker.display()
+    );
+    let mut cmd = Command::new("/system/bin/sh");
+    cmd.args(["-c", &script])
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null());
+    if let Err(e) = cmd.spawn() {
+        warn!("payload: spawn lsposed manager install failed: {e}");
+    }
 }
 
 fn spawn_fetch() {
