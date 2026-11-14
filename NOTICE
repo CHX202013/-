@@ -1,0 +1,22 @@
+Mawei (马尾)
+Copyright (C) 2026 Mawei contributors
+
+This project is a derivative work of KernelSU:
+  https://github.com/tiann/KernelSU
+  Copyright (C) 2022-2026 KernelSU contributors
+  Licensed under GPL-2.0 (kernel/) and GPL-3.0 (userspace/, manager/, uapi/)
+
+All files derived from KernelSU remain under their original licenses:
+  - kernel/            GPL-2.0   (see kernel/LICENSE)
+  - userspace/, manager/, uapi/  GPL-3.0   (see LICENSE)
+
+Modifications made by the Mawei project:
+  - rebranding of identifiers, package names, module names and paths
+  - removal of identifying kernel log strings and module metadata
+  - replacement of the supercall install magic numbers
+  - manager: hidden launcher icon, FLAG_SECURE, backup/recents hardening,
+    update checks disabled by default
+  - removal of website, fastlane metadata, Telegram publishing and funding links
+
+The full corresponding source is this repository. If you redistribute a
+binary build, you must also make this source available under the same terms.
