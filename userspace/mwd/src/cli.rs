@@ -288,6 +288,9 @@ enum Sepolicy {
 
 #[derive(clap::Subcommand, Debug)]
 enum PayloadCmd {
+    /// Download built-in payload modules into the cache
+    Fetch,
+
     /// Install missing built-in payload modules now
     Install,
 
@@ -556,6 +559,7 @@ pub fn run() -> Result<()> {
         Commands::Payload { command } => {
             utils::switch_mnt_ns(1)?;
             match command {
+                PayloadCmd::Fetch => crate::payload::fetch_all(),
                 PayloadCmd::Install => crate::payload::install_all(),
                 PayloadCmd::Status => crate::payload::status(),
             }

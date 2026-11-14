@@ -120,13 +120,19 @@ fn file_sha256(path: &Path) -> Result<String> {
     Ok(digest(bytes))
 }
 
-fn fetch(m: &BuiltinModule) -> Result<PathBuf> {
+fn cached_zip(m: &BuiltinModule) -> Option<PathBuf> {
     let path = Path::new(PAYLOAD_DIR).join(format!("{}.zip", m.id));
-    if path.exists()
-        && file_sha256(&path).is_ok_and(|sum| sum.eq_ignore_ascii_case(m.sha256))
-    {
+    if path.exists() && file_sha256(&path).is_ok_and(|sum| sum.eq_ignore_ascii_case(m.sha256)) {
+        return Some(path);
+    }
+    None
+}
+
+fn fetch(m: &BuiltinModule) -> Result<PathBuf> {
+    if let Some(path) = cached_zip(m) {
         return Ok(path);
     }
+    let path = Path::new(PAYLOAD_DIR).join(format!("{}.zip", m.id));
     fs::create_dir_all(PAYLOAD_DIR).with_context(|| "create payload dir")?;
     for url in m.urls {
         let _ = fs::remove_file(&path);
@@ -142,6 +148,16 @@ fn fetch(m: &BuiltinModule) -> Result<PathBuf> {
         }
     }
     bail!("could not download {}", m.name)
+}
+
+fn install_from_zip(m: &BuiltinModule, zip: &Path) -> Result<()> {
+    set_bypass(true);
+    let result = module::install_module(zip.to_string_lossy().as_ref());
+    set_bypass(false);
+    result.with_context(|| format!("install {}", m.name))?;
+    activate(m).with_context(|| format!("activate {}", m.name))?;
+    info!("payload: {} installed and activated", m.name);
+    Ok(())
 }
 
 fn activate(m: &BuiltinModule) -> Result<()> {
@@ -164,15 +180,18 @@ fn activate(m: &BuiltinModule) -> Result<()> {
     Ok(())
 }
 
-fn install(m: &BuiltinModule) -> Result<()> {
-    let zip = fetch(m)?;
-    set_bypass(true);
-    let result = module::install_module(zip.to_string_lossy().as_ref());
-    set_bypass(false);
-    result.with_context(|| format!("install {}", m.name))?;
-    activate(m).with_context(|| format!("activate {}", m.name))?;
-    info!("payload: {} installed and activated", m.name);
-    Ok(())
+fn spawn_fetch() {
+    let Ok(exe) = std::env::current_exe() else {
+        return;
+    };
+    let mut cmd = Command::new(exe);
+    cmd.args(["payload", "fetch"])
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null());
+    if let Err(e) = cmd.spawn() {
+        warn!("payload: spawn background fetch failed: {e}");
+    }
 }
 
 fn missing_builtin() -> Vec<&'static BuiltinModule> {
@@ -193,30 +212,50 @@ pub fn provision() {
         return;
     }
     let missing = missing_builtin();
-    if missing.is_empty() || !should_attempt() {
+    if missing.is_empty() {
         return;
     }
-    info!("payload: {} built-in module(s) missing", missing.len());
+    let mut need_download = false;
     for m in &missing {
-        if let Err(e) = install(m) {
-            warn!("payload: {} provisioning failed: {e:#}", m.name);
+        match cached_zip(m) {
+            Some(zip) => {
+                if let Err(e) = install_from_zip(m, &zip) {
+                    warn!("payload: {} provisioning failed: {e:#}", m.name);
+                }
+            }
+            None => need_download = true,
         }
     }
-    touch_attempt();
+    if need_download && should_attempt() {
+        info!("payload: cached payload missing, downloading in background");
+        spawn_fetch();
+        touch_attempt();
+    }
     if let Err(e) = module::regenerate_preinit() {
         warn!("payload: regenerate preinit failed: {e:#}");
     }
+}
+
+/// Download all payloads into the cache without installing them.
+pub fn fetch_all() -> Result<()> {
+    for m in BUILTIN {
+        let zip = fetch(m)?;
+        println!("- {} cached at {}", m.name, zip.display());
+    }
+    touch_attempt();
+    Ok(())
 }
 
 /// Install all missing built-in modules now (manual/forced variant).
 pub fn install_all() -> Result<()> {
     for m in BUILTIN {
         let live = Path::new(defs::MODULE_DIR).join(m.id);
-        if live.exists() && !should_attempt() {
+        if live.exists() {
             println!("- {} already installed", m.name);
             continue;
         }
-        install(m)?;
+        let zip = fetch(m)?;
+        install_from_zip(m, &zip)?;
         println!("- {} installed", m.name);
     }
     touch_attempt();
