@@ -295,6 +295,7 @@ enum PayloadCmd {
     Status,
 }
 
+#[derive(clap::Subcommand, Debug)]
 enum Module {
     /// Install module <ZIP>
     Install {
