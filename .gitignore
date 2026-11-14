@@ -1,0 +1,10 @@
+build/
+target/
+.gradle/
+*.iml
+local.properties
+*.jks
+*.keystore
+mawei-release.jks
+kernel/*.ko
+kernel/out/
