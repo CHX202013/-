@@ -55,7 +55,7 @@ derive-new = "0.7"
 getopts = "0.2"
 mwinit = { path = "../mwinit" }
 adb_client = { git = "https://github.com/KernelSU2/adb_client" }
-prop-rs-android = { git = "https://github.com/KernelSU2/mw_props", rev = "ddb6ee7294467f7f25bad2118e9e24eee104144b" }
+prop-rs-android = { git = "https://github.com/KernelSU2/ksu_props", rev = "ddb6ee7294467f7f25bad2118e9e24eee104144b" }
 
 [build-dependencies]
 bindgen = "0.73"
