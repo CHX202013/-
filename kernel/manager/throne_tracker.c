@@ -39,7 +39,7 @@ static void crown_manager(const char *apk, struct list_head *uid_data)
 
     list_for_each_entry (np, list, list) {
         if (strncmp(np->package, MW_PACKAGE_NAME, MW_MAX_PACKAGE_NAME) == 0) {
-            pr_info("Crowning manager: uid=%d\n", np->uid);
+            pr_debug("Crowning manager: uid=%d\n", np->uid);
             mw_set_manager_appid(np->uid);
             break;
         }
@@ -98,7 +98,7 @@ static FILLDIR_RETURN_TYPE my_actor(struct dir_context *ctx, const char *name, i
         return FILLDIR_ACTOR_CONTINUE; // Skip "." and ".."
 
     if (d_type == DT_DIR && namelen >= 8 && !strncmp(name, "vmdl", 4) && !strncmp(name + namelen - 4, ".tmp", 4)) {
-        pr_info("Skipping directory: %.*s\n", namelen, name);
+        pr_debug("Skipping directory: %.*s\n", namelen, name);
         return FILLDIR_ACTOR_CONTINUE; // Skip staging package
     }
 
@@ -173,7 +173,7 @@ static void search_manager(const char *path, int depth, struct list_head *uid_da
             if (!data_app_magic) {
                 if (file->f_inode->i_sb->s_magic) {
                     data_app_magic = file->f_inode->i_sb->s_magic;
-                    pr_info("%s: dir: %s got magic! 0x%lx\n", __func__, pos->dirpath, data_app_magic);
+                    pr_debug("%s: dir: %s got magic! 0x%lx\n", __func__, pos->dirpath, data_app_magic);
                 } else {
                     filp_close(file, NULL);
                     goto skip_iterate;
@@ -181,7 +181,7 @@ static void search_manager(const char *path, int depth, struct list_head *uid_da
             }
 
             if (file->f_inode->i_sb->s_magic != data_app_magic) {
-                pr_info("%s: skip: %s magic: 0x%lx expected: 0x%lx\n", __func__, pos->dirpath,
+                pr_debug("%s: skip: %s magic: 0x%lx expected: 0x%lx\n", __func__, pos->dirpath,
                         file->f_inode->i_sb->s_magic, data_app_magic);
                 filp_close(file, NULL);
                 goto skip_iterate;
@@ -197,7 +197,7 @@ static void search_manager(const char *path, int depth, struct list_head *uid_da
             stop = 1;
 
             bool is_manager = is_manager_apk(candidate_path);
-            pr_info("Found manager base.apk at path: %s, is_manager: %d\n", candidate_path, is_manager);
+            pr_debug("Found manager base.apk at path: %s, is_manager: %d\n", candidate_path, is_manager);
 
             // Only crown if signature verification pass
             if (unlikely(!is_manager))
@@ -308,7 +308,7 @@ void track_throne(bool prune_only)
     if (manager_package_uid == MW_INVALID_APPID) {
         cached_manager_apk_path[0] = 0;
         if (mw_is_manager_appid_valid()) {
-            pr_info("manager is uninstalled, invalidate it!\n");
+            pr_debug("manager is uninstalled, invalidate it!\n");
             mw_invalidate_manager_uid();
             goto prune;
         }
@@ -317,13 +317,13 @@ void track_throne(bool prune_only)
             need_rescan = true;
         } else if (unlikely(np->uid != mw_get_manager_appid())) {
             // this should not happen in normal android system
-            pr_info("manager uid changed, invalidate it!\n");
+            pr_debug("manager uid changed, invalidate it!\n");
             cached_manager_apk_path[0] = 0;
             mw_invalidate_manager_uid();
             need_rescan = true;
         } else {
             // uid unchanged, skip
-            pr_info("manager uid unchanged, skip search!\n");
+            pr_debug("manager uid unchanged, skip search!\n");
         }
     }
 
@@ -334,16 +334,16 @@ void track_throne(bool prune_only)
             int ret = kern_path(cached_manager_apk_path, 0, &p);
             if (ret == 0) {
                 // skip search
-                pr_info("manager apk path unchanged, skip search!\n");
+                pr_debug("manager apk path unchanged, skip search!\n");
                 path_put(&p);
                 goto prune;
             } else if (ret != -ENOENT) {
                 pr_err("stat cached manager path failed: %d (path=%s)\n", ret, cached_manager_apk_path);
             }
         }
-        pr_info("Searching manager " MW_PACKAGE_NAME "...\n");
+        pr_debug("Searching manager " MW_PACKAGE_NAME "...\n");
         search_manager("/data/app", 2, &uid_list);
-        pr_info("Search manager finished\n");
+        pr_debug("Search manager finished\n");
     }
 
 prune:

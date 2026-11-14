@@ -159,6 +159,7 @@ void apply_mawei_rules()
     // Allow system server kill su process
     mw_allow(db, "system_server", KERNEL_SU_DOMAIN, "process", "getpgid");
     mw_allow(db, "system_server", KERNEL_SU_DOMAIN, "process", "sigkill");
+    mw_allow(db, "system_server", KERNEL_SU_DOMAIN, "process", "setsched");
 
     rcu_assign_pointer(selinux_state.policy, pol);
     synchronize_rcu();

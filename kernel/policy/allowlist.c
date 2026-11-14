@@ -117,7 +117,7 @@ static bool profile_valid(struct app_profile *profile)
     }
 
     if (profile->version != MW_APP_PROFILE_VER) {
-        pr_info("Unsupported profile version: %d\n", profile->version);
+        pr_debug("Unsupported profile version: %d\n", profile->version);
         return false;
     }
 
@@ -217,10 +217,10 @@ int mw_set_app_profile(struct app_profile *profile)
     kref_init(&np->ref);
     memcpy(&np->profile, profile, sizeof(*profile));
     if (profile->allow_su) {
-        pr_info("set root profile, key: %s, uid: %d, gid: %d, context: %s\n", profile->key, profile->curr_uid,
+        pr_debug("set root profile, key: %s, uid: %d, gid: %d, context: %s\n", profile->key, profile->curr_uid,
                 profile->rp_config.profile.gid, profile->rp_config.profile.selinux_domain);
     } else {
-        pr_info("set app profile, key: %s, uid: %d, umount modules: %d\n", profile->key, profile->curr_uid,
+        pr_debug("set app profile, key: %s, uid: %d, umount modules: %d\n", profile->key, profile->curr_uid,
                 profile->nrp_config.profile.umount_modules);
     }
 
@@ -482,7 +482,7 @@ static void migrate_profile(u32 version, struct app_profile *profile)
             domain = profile->rp_config.profile.selinux_domain;
             if (strncmp(domain, "u:r:su:s0", domain_len) == 0) {
                 strscpy_pad(domain, MW_DEFAULT_SELINUX_DOMAIN, domain_len);
-                pr_info("migrated domain of profile: %s\n", profile->key);
+                pr_debug("migrated domain of profile: %s\n", profile->key);
             }
         }
         fallthrough;
@@ -499,7 +499,7 @@ static void migrate_profile(u32 version, struct app_profile *profile)
 void mw_load_allow_list()
 {
 #ifdef CONFIG_MW_DISABLE_POLICY
-    pr_info("allowlist load skipped because policy is disabled\n");
+    pr_debug("allowlist load skipped because policy is disabled\n");
     return;
 #endif
 
@@ -534,7 +534,7 @@ void mw_load_allow_list()
         goto exit;
     }
 
-    pr_info("allowlist version: %d\n", version);
+    pr_debug("allowlist version: %d\n", version);
 
     static const size_t kAppProfileSizePreV4 = 776;
     app_profile_size = version < MW_APP_PROFILE_VER ? kAppProfileSizePreV4 : sizeof(struct app_profile);
@@ -546,13 +546,13 @@ void mw_load_allow_list()
 
         if (ret != app_profile_size) {
             if (ret != 0)
-                pr_info("load_allow_list read err: %zd\n", ret);
+                pr_debug("load_allow_list read err: %zd\n", ret);
             break;
         }
 
         migrate_profile(version, &profile);
 
-        pr_info("load_allow_uid, name: %s, uid: %d, allow: %d\n", profile.key, profile.curr_uid, profile.allow_su);
+        pr_debug("load_allow_uid, name: %s, uid: %d, allow: %d\n", profile.key, profile.curr_uid, profile.allow_su);
         mw_set_app_profile(&profile);
     }
     filp_close(fp, 0);
@@ -571,7 +571,7 @@ void mw_prune_allowlist(bool (*is_uid_valid)(uid_t, char *, void *), void *data)
     int i;
 
     if (!mw_boot_completed) {
-        pr_info("boot not completed, skip prune\n");
+        pr_debug("boot not completed, skip prune\n");
         return;
     }
 
