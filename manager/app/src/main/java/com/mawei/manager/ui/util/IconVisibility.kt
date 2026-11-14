@@ -14,6 +14,7 @@ import android.graphics.Rect
 import android.graphics.Typeface
 import android.graphics.drawable.Icon
 import android.os.Build
+import com.mawei.manager.R
 
 /**
  * 桌面图标隐藏。
@@ -29,8 +30,8 @@ object IconVisibility {
     private const val SHORTCUT_ID = "console"
 
     // 用 applicationId 拼组件名：包名可在构建期改成任意值（-PMW_PACKAGE_NAME）
-    private fun alias(context: Context) = ComponentName(context.packageName + ALIAS_SUFFIX)
-    private fun mainActivity(context: Context) = ComponentName(context.packageName + MAIN_SUFFIX)
+    private fun alias(context: Context) = ComponentName(context.packageName, context.packageName + ALIAS_SUFFIX)
+    private fun mainActivity(context: Context) = ComponentName(context.packageName, context.packageName + MAIN_SUFFIX)
 
     fun isHidden(context: Context): Boolean =
         context.packageManager.getComponentEnabledSetting(alias(context)) ==
@@ -53,7 +54,7 @@ object IconVisibility {
                 .setIcon(buildShortcutIcon())
                 .setIntent(
                     Intent(Intent.ACTION_MAIN).apply {
-                        setClassName(mainActivity(context))
+                        setComponent(mainActivity(context))
                         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     }
                 )
