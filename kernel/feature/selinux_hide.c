@@ -361,7 +361,7 @@ static void initialize_fake_status()
     }
 
     fake_status = new_page;
-    pr_info("initialize_fake_status initialized: sequence=%d, policyload=%d, enforcing=%d\n", new_status->sequence,
+    pr_debug("initialize_fake_status initialized: sequence=%d, policyload=%d, enforcing=%d\n", new_status->sequence,
             new_status->policyload, new_status->enforcing);
 
 out:
@@ -392,7 +392,7 @@ static void mw_selinux_hide_unhook();
 static int mw_selinux_hide_enable()
 {
     int ret;
-    pr_info("selinux_hide: init selinux hide\n");
+    pr_debug("selinux_hide: init selinux hide\n");
     if (!backup_sepolicy) {
         pr_err("no backup sepolicy available, please save feature and reboot to retry!\n");
         return -EAGAIN;
@@ -414,7 +414,7 @@ static int mw_selinux_hide_enable()
     }
 
     context_write = &selinux_write_op[SEL_CONTEXT];
-    pr_info("selinux_hide: context_write: 0x%lx [%pSb]\n", (unsigned long)*context_write, *context_write);
+    pr_debug("selinux_hide: context_write: 0x%lx [%pSb]\n", (unsigned long)*context_write, *context_write);
     write_op_fn my = my_write_context;
     orig_context_write = *context_write;
     ret = mw_patch_text(context_write, &my, sizeof(my), MW_PATCH_TEXT_FLUSH_DCACHE);
@@ -424,7 +424,7 @@ static int mw_selinux_hide_enable()
     }
 
     access_write = &selinux_write_op[SEL_ACCESS];
-    pr_info("selinux_hide: access_write: 0x%lx [%pSb]\n", (unsigned long)*access_write, *access_write);
+    pr_debug("selinux_hide: access_write: 0x%lx [%pSb]\n", (unsigned long)*access_write, *access_write);
     my = my_write_access;
     orig_access_write = *access_write;
     ret = mw_patch_text(access_write, &my, sizeof(my), MW_PATCH_TEXT_FLUSH_DCACHE);
@@ -477,7 +477,7 @@ static void mw_selinux_hide_unhook()
 
 static void mw_selinux_hide_disable()
 {
-    pr_info("selinux_hide: exit selinux hide\n");
+    pr_debug("selinux_hide: exit selinux hide\n");
     mw_selinux_hide_unhook();
 }
 
@@ -491,7 +491,7 @@ static int selinux_hide_feature_set(u64 value)
 {
     bool enable = value != 0;
     int ret = 0;
-    pr_info("selinux_hide: set to %d\n", enable);
+    pr_debug("selinux_hide: set to %d\n", enable);
     mutex_lock(&selinux_hide_mutex);
     mw_selinux_hide_enabled = enable;
     if (enable) {
@@ -592,7 +592,7 @@ void mw_selinux_hide_drop_backup_if_unused()
 {
     mutex_lock(&selinux_hide_mutex);
     if (!mw_selinux_hide_running && backup_sepolicy) {
-        pr_info("selinux_hide is not enabled - drop backup_sepolicy\n");
+        pr_debug("selinux_hide is not enabled - drop backup_sepolicy\n");
         sidtab_destroy(backup_sepolicy->sidtab);
         kfree(backup_sepolicy->sidtab);
         mw_destroy_sepolicy(backup_sepolicy);

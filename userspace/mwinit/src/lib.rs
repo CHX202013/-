@@ -98,7 +98,7 @@ fn open_kmsg_at_end() -> Result<File> {
                 file.seek(SeekFrom::End(0))
                     .with_context(|| format!("Cannot seek {path} to end"))?;
 
-                log::info!("Reading kernel log from {path}");
+                log::debug!("Reading kernel log from {path}");
                 return Ok(file);
             }
             Err(error) => {
@@ -467,7 +467,7 @@ fn has_mawei_legacy() -> bool {
         );
     }
 
-    log::info!("Mawei version: {}", version);
+    log::debug!("Mawei version: {}", version);
 
     version != 0
 }
@@ -540,7 +540,7 @@ fn has_mawei_v2() -> bool {
         0
     };
 
-    log::info!("Mawei version: {}", version);
+    log::debug!("Mawei version: {}", version);
 
     version != 0
 }

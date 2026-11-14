@@ -172,7 +172,7 @@ static long do_mw_adb_root_handle_execve(const char __user *filename_user, struc
         return ret;
     }
 
-    pr_info("escape to root for adb\n");
+    pr_debug("escape to root for adb\n");
     escape_to_root_for_adb_root();
     return 0;
 }
@@ -209,7 +209,7 @@ static int kernel_adb_root_feature_set(u64 value)
     } else {
         static_key_disable(&mw_adb_root.key);
     }
-    pr_info("adb_root: set to %d\n", enable);
+    pr_debug("adb_root: set to %d\n", enable);
     return 0;
 }
 

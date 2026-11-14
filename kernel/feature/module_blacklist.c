@@ -80,7 +80,7 @@ void __init mw_module_blacklist_init(void)
     // Force every other CPU through a memory barrier so any module load already
     // in flight observes the new list right away (suggested by @backslashxx).
     kick_all_cpus_sync();
-    pr_info("module_blacklist: blocking modules: %s\n", merged);
+    pr_debug("module_blacklist: blocking modules: %s\n", merged);
 }
 
 void __exit mw_module_blacklist_exit(void)

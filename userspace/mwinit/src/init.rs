@@ -79,6 +79,7 @@ fn setup_kmsg() {
     };
 
     let _ = kernlog::init_with_device(device);
+    log::set_max_level(log::LevelFilter::Error);
 }
 
 fn unlimit_kmsg() {
@@ -95,8 +96,6 @@ pub fn init() -> Result<()> {
     // Setup kernel log first
     setup_kmsg();
 
-    log::info!("Hello, Mawei!");
-
     // mount /proc to access kernel interface
     let _dontdrop = prepare_mount();
 
@@ -104,9 +103,9 @@ pub fn init() -> Result<()> {
     unlimit_kmsg();
 
     if mwinit::has_mawei() {
-        log::info!("Mawei may be already loaded in kernel, skip!");
+        log::debug!("Mawei may be already loaded in kernel, skip!");
     } else {
-        log::info!("Loading mawei.ko..");
+        log::debug!("Loading mawei.ko..");
         if let Err(e) = load_module_from_path("/mawei.ko") {
             log::error!("Cannot load mawei.ko: {:?}", e);
         }
@@ -120,7 +119,7 @@ pub fn init() -> Result<()> {
         Err(_) => "/system/bin/init",
     };
 
-    log::info!("init is {}", real_init);
+    log::debug!("init is {}", real_init);
     symlink(real_init, "/init")?;
 
     Ok(())
@@ -131,6 +130,6 @@ fn load_module_from_path(path: &str) -> Result<()> {
     let buffer = std::fs::read(path).with_context(|| format!("Cannot read file {}", path))?;
     let params = std::fs::read("/mw_config").unwrap_or_default();
     let params = unsafe { CString::from_vec_unchecked(params) };
-    log::info!("load mawei with params {params:?}");
+    log::debug!("load mawei with params {params:?}");
     mwinit::load_module(&buffer, &params)
 }

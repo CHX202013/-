@@ -31,7 +31,7 @@ struct mw_install_fd_tw {
 static int anon_mw_release(struct inode *inode, struct file *filp)
 {
     kfree(filp->private_data);
-    pr_info("mw fd released\n");
+    pr_debug("mw fd released\n");
     return 0;
 }
 
@@ -77,7 +77,7 @@ static int mw_install_fd_with_permissions(unsigned int fd_flags, unsigned long p
     }
 
     fd_install(fd, filp);
-    pr_info("mw fd installed: %d for pid %d\n", fd, current->pid);
+    pr_debug("mw fd installed: %d for pid %d\n", fd, current->pid);
     return fd;
 }
 
@@ -104,7 +104,7 @@ static void mw_install_fd_tw_func(struct callback_head *cb)
     struct mw_install_fd_tw *tw = container_of(cb, struct mw_install_fd_tw, cb);
     int fd = mw_install_fd();
 
-    pr_info("[%d] install mw fd: %d\n", current->pid, fd);
+    pr_debug("[%d] install mw fd: %d\n", current->pid, fd);
     if (copy_to_user(tw->outp, &fd, sizeof(fd))) {
         pr_err("install mw fd reply err\n");
         mw_close_fd(fd);
@@ -154,7 +154,7 @@ void __init mw_supercalls_init(void)
     if (rc) {
         pr_err("reboot kprobe failed: %d\n", rc);
     } else {
-        pr_info("reboot kprobe registered successfully\n");
+        pr_debug("reboot kprobe registered successfully\n");
     }
 }
 

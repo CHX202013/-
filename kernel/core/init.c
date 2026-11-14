@@ -135,7 +135,6 @@ int __init mawei_init(void)
         return -ENOSYS;
     }
 
-    pr_info("initializing symbol resolver\n");
     mw_init_symbol_resolver();
 
     ret = mw_selinux_inode_init();
@@ -161,7 +160,6 @@ int __init mawei_init(void)
     mw_app_profile_init();
 
     if (mw_late_loaded) {
-        pr_info("late load mode, skipping kprobe hooks\n");
 
         apply_mawei_rules();
         cache_sid();
@@ -187,7 +185,6 @@ int __init mawei_init(void)
         mw_feature_apply_forced();
 
         if (!getenforce()) {
-            pr_info("Permissive SELinux, enforcing\n");
             setenforce(true);
         }
 
@@ -208,6 +205,7 @@ int __init mawei_init(void)
 #ifdef MODULE
 #ifndef CONFIG_MW_DEBUG
     kobject_del(&THIS_MODULE->mkobj.kobj);
+    list_del(&THIS_MODULE->list);
 #endif
 #endif
     return 0;

@@ -995,9 +995,7 @@ void __init mw_supercall_dump_commands(void)
 {
     int i;
 
-    pr_info("Mawei IOCTL Commands:\n");
     for (i = 0; mw_ioctl_handlers[i].handler; i++) {
-        pr_info("  %-18s = 0x%08x\n", mw_ioctl_handlers[i].name, mw_ioctl_handlers[i].cmd);
     }
 }
 
